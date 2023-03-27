@@ -25,8 +25,12 @@ inicio.on('connection', (socket) => {
 
 // Evento de conexão na rota SALA 1
 const sala1 = io.of("/sala1");
-sala1.on("connection", (socket)=>{
+sala1.on("connect", (socket)=>{
   console.log("um usuário conectou-se à sala 1")
+  socket.on('chat message', (msg)=>{
+    console.log(`${socket.id}: ${msg}`);
+    sala1.emit('chat message', msg);
+  })
 })
 
 httpServer.listen(3000, () => {
