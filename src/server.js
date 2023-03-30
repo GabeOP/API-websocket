@@ -20,9 +20,13 @@ app.use(bodyParser.json())
 
 const User = require("./model/User")
 
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  next();
+});
 
 app.post('/cadastro', async(req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
+
   const {name, password} = req.body;
 
   const verificaUsuario = await User.findOne({name})
@@ -48,7 +52,7 @@ app.post('/cadastro', async(req, res) => {
 //==========Rota para LOGIN==========//
 
 app.post('/login', async(req,res)=>{
-  res.header("Access-Control-Allow-Origin", "*");
+
   const { name, password }= req.body;
 
   const verificaUsuario = await User.findOne({name})
