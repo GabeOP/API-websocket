@@ -5,36 +5,69 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, { cors: { origin: "*" } });
 
+const cors = require('cors')
+app.use(cors())
+
+//==========Rota para CADASTRO==========//
+
 //body-parser para analisar o corpo da requisição
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json())
 
 const User = require("./model/User")
-// Rota HTTP
+
+
 app.post('/cadastro', async(req, res) => {
   const {name, password} = req.body;
-  const user = new User ({name: name, password:password});
+  const user = new User ({name, password});
+  console.log({name, password})
   
   try{
     await user.save();
+    res.status(201).json({msg: "Usuário cadastrado com sucesso!"})
   }catch(error){
     console.log(error)
   }
-  res.redirect("http://127.0.0.1:5500/sala1/sala1.html")
 });
 
 
-// Evento de conexão na rota SALA 1
+//==========Rota para LOGIN==========//
+
+app.post('/login', async(req,res)=>{
+  const { name, password }= req.body;
+
+  const verificaUsuario = await User.findOne({name})
+
+  if(!verificaUsuario){
+    return res.status(404).json({msg: "Usuário não encontrado"})
+  }
+  
+  res.status(200).json({msg: "Login realizado com sucesso"})
+  // res.redirect("http://127.0.0.1:5500/sala1/sala1.html")
+});
+
+
+
+async function procuraUsuario(name){
+  const usuario = await User.findOne({name})
+
+  return usuario.name;
+}
+
+//==========Parte do websocket==========/
 const sala1 = io.of("/sala1");
 sala1.on("connect", (socket) => {
   console.log("Um usuário conectou-se à sala 1");
   socket.on("chat message", (msg) => {
     console.log(`${msg}`);
     sala1.emit("chat message", msg);
-    
   });
 
-});
+})
+
+//==========Evento de conexão na rota SALA 1==========//
+
 
 const connectDb = require("./data/db");
 connectDb();
