@@ -8,6 +8,9 @@ const io = new Server(httpServer, { cors: { origin: "*" } });
 const cors = require('cors')
 app.use(cors())
 
+const bcrypt = require("bcrypt");
+
+
 //==========Rota para CADASTRO==========//
 
 //body-parser para analisar o corpo da requisição
@@ -20,10 +23,19 @@ const User = require("./model/User")
 
 app.post('/cadastro', async(req, res) => {
   const {name, password} = req.body;
-  const user = new User ({name, password});
-  console.log({name, password})
+
+  const verificaUsuario = await User.findOne({name})
+  if(verificaUsuario){
+    return res.status(400).json({msg:"Usuário já cadastrado. Tente um nome diferente."})
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const senhaCripto = await await bcrypt.hash(password, salt)
+
+  const user = new User ({name, password: senhaCripto});
   
   try{
+
     await user.save();
     res.status(201).json({msg: "Usuário cadastrado com sucesso!"})
   }catch(error){
@@ -43,8 +55,12 @@ app.post('/login', async(req,res)=>{
     return res.status(404).json({msg: "Usuário não encontrado"})
   }
   
+  const checaSenha = await bcrypt.compare(password, verificaUsuario.password)
+  if(!checaSenha){
+    return res.status(422).json({msg: "Senha incorreta."})
+  }
+
   res.status(200).json({msg: "Login realizado com sucesso"})
-  // res.redirect("http://127.0.0.1:5500/sala1/sala1.html")
 });
 
 
